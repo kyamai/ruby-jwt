@@ -38,6 +38,7 @@ module JWT
 
     def verify_expiration
       return unless @payload.include?('exp')
+      raise(JWT::InvalidDatetimeFormat, 'Exp is not IntDate value') if !@payload['exp'].is_a?(Numeric)
       raise(JWT::ExpiredSignature, 'Signature has expired') if @payload['exp'].to_i <= (Time.now.to_i - exp_leeway)
     end
 
@@ -45,7 +46,8 @@ module JWT
       return unless @payload.include?('iat')
 
       iat = @payload['iat']
-      raise(JWT::InvalidIatError, 'Invalid iat') if !iat.is_a?(Numeric) || iat.to_f > Time.now.to_f
+      raise(JWT::InvalidDatetimeFormat, 'Iat is not IntDate value') if !@payload['iat'].is_a?(Numeric)
+      raise(JWT::InvalidIatError, 'Invalid iat') if iat.to_f > Time.now.to_f
     end
 
     def verify_iss
@@ -72,6 +74,7 @@ module JWT
 
     def verify_not_before
       return unless @payload.include?('nbf')
+      raise(JWT::InvalidDatetimeFormat, 'Nbf is not IntDate value') if !@payload['nbf'].is_a?(Numeric)
       raise(JWT::ImmatureSignature, 'Signature nbf has not been reached') if @payload['nbf'].to_i > (Time.now.to_i + nbf_leeway)
     end
 

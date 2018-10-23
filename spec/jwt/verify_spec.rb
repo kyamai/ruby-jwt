@@ -77,6 +77,13 @@ module JWT
           end.to raise_error JWT::ExpiredSignature
         end
       end
+
+      it 'must raise JWT::InvalidDatetimeFormat when the exp is not IntDate' do
+        payload['exp'] = Time.now.to_s
+        expect do
+          Verify.verify_expiration(payload, options)
+        end.to raise_error JWT::InvalidDatetimeFormat
+      end
     end
 
     context '.verify_iat(payload, options)' do
@@ -88,7 +95,7 @@ module JWT
       end
 
       it 'must ignore configured leeway' do
-        expect{Verify.verify_iat(payload.merge('iat' => (iat + 60)), options.merge(leeway: 70)) }
+        expect { Verify.verify_iat(payload.merge('iat' => (iat + 60)), options.merge(leeway: 70)) }
           .to raise_error(JWT::InvalidIatError)
       end
 
@@ -96,10 +103,10 @@ module JWT
         Verify.verify_iat(payload.merge('iat' => Time.now.to_i), options)
       end
 
-      it 'must raise JWT::InvalidIatError when the iat value is not Numeric' do
+      it 'must raise JWT::InvalidDatetimeFormat when the iat value is not Numeric' do
         expect do
           Verify.verify_iat(payload.merge('iat' => 'not a number'), options)
-        end.to raise_error JWT::InvalidIatError
+        end.to raise_error JWT::InvalidDatetimeFormat
       end
 
       it 'must raise JWT::InvalidIatError when the iat value is in the future' do
@@ -182,7 +189,7 @@ module JWT
 
       it 'it should not throw arguement error with 2 args' do
         expect do
-          Verify.verify_jti(payload, options.merge(verify_jti: ->(_jti, pl) {
+          Verify.verify_jti(payload, options.merge(verify_jti: ->(_jti, _pl) {
             true
           }))
         end.to_not raise_error
@@ -209,6 +216,12 @@ module JWT
 
       it 'must allow some leeway in the token age when nbf_leeway is configured' do
         Verify.verify_not_before(payload, options.merge(nbf_leeway: 10))
+      end
+
+      it 'must raise JWT::InvalidDatetimeFormat when the nbf value is not Numeric' do
+        expect do
+          Verify.verify_not_before(payload.merge('nbf' => 'not a number'), options)
+        end.to raise_error JWT::InvalidDatetimeFormat
       end
     end
 
